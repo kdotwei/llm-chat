@@ -1,103 +1,23 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useEffect, useState, useCallback } from 'react'
+import type { Message, Settings } from './types'
+import {
+  API_URL, MODELS_URL, LS_KEY, LS_SETTINGS_KEY,
+  loadSettings, generateId, buildPayload,
+} from './constants'
+import Header from './components/Header'
+import ApiKeyModal from './components/ApiKeyModal'
+import SettingsPanel from './components/SettingsPanel'
+import MessageList from './components/MessageList'
+import ChatInput from './components/ChatInput'
 
 // ---------------------------------------------------------------------------
-// Types
+// Placeholder — keeps TypeScript happy until the old body below is removed
 // ---------------------------------------------------------------------------
 
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-}
-
-interface Settings {
-  model: string
-  systemPrompt: string
-  temperature: number
-  maxTokens: number    // -1 = server default / no explicit limit
-  topP: number
-  memoryWindow: number // 0 = entire history, N = last N turns (1 turn = user+assistant)
-}
-
-// ---------------------------------------------------------------------------
-// Constants & helpers
-// ---------------------------------------------------------------------------
-
-const API_URL = import.meta.env.VITE_API_URL as string
-const MODELS_URL = API_URL.replace(/\/chat\/completions$/, '/models')
-const LS_KEY = 'llm_chatroom_api_key'
-const LS_SETTINGS_KEY = 'llm_chatroom_settings'
-
-const DEFAULT_SETTINGS: Settings = {
-  model: (import.meta.env.VITE_API_MODEL as string | undefined) ?? '',
-  systemPrompt: 'You are a helpful assistant.',
-  temperature: 0.7,
-  maxTokens: -1,
-  topP: 0.95,
-  memoryWindow: 0,
-}
-
-function loadSettings(): Settings {
-  try {
-    const raw = localStorage.getItem(LS_SETTINGS_KEY)
-    if (!raw) return { ...DEFAULT_SETTINGS }
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) }
-  } catch {
-    return { ...DEFAULT_SETTINGS }
-  }
-}
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10)
-}
-
-/** Build the messages array to send to the API, applying memory window. */
-function buildPayload(
-  messages: Message[],
-  settings: Settings,
-): { role: string; content: string }[] {
-  const system = { role: 'system', content: settings.systemPrompt }
-  const history =
-    settings.memoryWindow > 0
-      ? messages.slice(-(settings.memoryWindow * 2))
-      : messages
-  return [system, ...history.map(({ role, content }) => ({ role, content }))]
-}
-
-// ---------------------------------------------------------------------------
-// Markdown renderer
-// ---------------------------------------------------------------------------
-
-function MarkdownContent({ content }: { content: string }) {
+function _unused_MarkdownContent({ content }: { content: string }) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        code({ className, children, ...props }) {
-          const match = /language-(\w+)/.exec(className ?? '')
-          const codeString = String(children).replace(/\n$/, '')
-          if (match) {
-            return (
-              <SyntaxHighlighter
-                style={oneDark}
-                language={match[1]}
-                PreTag="div"
-                className="!my-2 !rounded-lg !text-xs"
-              >
-                {codeString}
-              </SyntaxHighlighter>
-            )
-          }
-          return (
-            <code
-              className="rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-rose-600"
-              {...props}
-            >
-              {children}
+    <code>
+      {content}
             </code>
           )
         },
