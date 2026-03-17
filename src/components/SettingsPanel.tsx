@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react'
 import type { Settings } from '../types'
 
 interface SettingsPanelProps {
   show: boolean
   settings: Settings
   availableModels: string[]
-  patchSettings: <K extends keyof Settings>(key: K, value: Settings[K]) => void
+  onSave: (s: Settings) => void
   onClose: () => void
   onClear: () => void
 }
@@ -13,10 +14,27 @@ export default function SettingsPanel({
   show,
   settings,
   availableModels,
-  patchSettings,
+  onSave,
   onClose,
   onClear,
 }: SettingsPanelProps) {
+  const [draft, setDraft] = useState<Settings>(settings)
+
+  // Reset draft to committed settings whenever the panel opens
+  useEffect(() => {
+    if (show) setDraft(settings)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show])
+
+  function patch<K extends keyof Settings>(key: K, value: Settings[K]) {
+    setDraft((d) => ({ ...d, [key]: value }))
+  }
+
+  function handleSave() {
+    onSave(draft)
+    onClose()
+  }
+
   return (
     <>
       {show && (
@@ -48,8 +66,8 @@ export default function SettingsPanel({
             </label>
             {availableModels.length > 0 ? (
               <select
-                value={settings.model}
-                onChange={(e) => patchSettings('model', e.target.value)}
+                value={draft.model}
+                onChange={(e) => patch('model', e.target.value)}
                 className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               >
                 {availableModels.map((m) => (
@@ -59,8 +77,8 @@ export default function SettingsPanel({
             ) : (
               <input
                 type="text"
-                value={settings.model}
-                onChange={(e) => patchSettings('model', e.target.value)}
+                value={draft.model}
+                onChange={(e) => patch('model', e.target.value)}
                 placeholder="model-id"
                 className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
@@ -74,8 +92,8 @@ export default function SettingsPanel({
             </label>
             <textarea
               rows={4}
-              value={settings.systemPrompt}
-              onChange={(e) => patchSettings('systemPrompt', e.target.value)}
+              value={draft.systemPrompt}
+              onChange={(e) => patch('systemPrompt', e.target.value)}
               className="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm leading-relaxed outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
@@ -86,12 +104,12 @@ export default function SettingsPanel({
               <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Temperature
               </label>
-              <span className="text-xs font-mono text-gray-600">{settings.temperature.toFixed(2)}</span>
+              <span className="text-xs font-mono text-gray-600">{draft.temperature.toFixed(2)}</span>
             </div>
             <input
               type="range" min={0} max={2} step={0.01}
-              value={settings.temperature}
-              onChange={(e) => patchSettings('temperature', parseFloat(e.target.value))}
+              value={draft.temperature}
+              onChange={(e) => patch('temperature', parseFloat(e.target.value))}
               className="w-full accent-blue-500"
             />
             <div className="mt-0.5 flex justify-between text-[10px] text-gray-400">
@@ -105,12 +123,12 @@ export default function SettingsPanel({
               <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Top-P
               </label>
-              <span className="text-xs font-mono text-gray-600">{settings.topP.toFixed(2)}</span>
+              <span className="text-xs font-mono text-gray-600">{draft.topP.toFixed(2)}</span>
             </div>
             <input
               type="range" min={0} max={1} step={0.01}
-              value={settings.topP}
-              onChange={(e) => patchSettings('topP', parseFloat(e.target.value))}
+              value={draft.topP}
+              onChange={(e) => patch('topP', parseFloat(e.target.value))}
               className="w-full accent-blue-500"
             />
           </div>
@@ -122,8 +140,8 @@ export default function SettingsPanel({
             </label>
             <input
               type="number" min={-1}
-              value={settings.maxTokens}
-              onChange={(e) => patchSettings('maxTokens', parseInt(e.target.value) || -1)}
+              value={draft.maxTokens}
+              onChange={(e) => patch('maxTokens', parseInt(e.target.value) || -1)}
               className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
@@ -135,8 +153,8 @@ export default function SettingsPanel({
             </label>
             <input
               type="number" min={0}
-              value={settings.memoryWindow}
-              onChange={(e) => patchSettings('memoryWindow', parseInt(e.target.value) || 0)}
+              value={draft.memoryWindow}
+              onChange={(e) => patch('memoryWindow', parseInt(e.target.value) || 0)}
               className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
             <p className="mt-1 text-[11px] text-gray-400">
@@ -146,7 +164,13 @@ export default function SettingsPanel({
 
         </div>
 
-        <div className="border-t border-gray-200 p-4">
+        <div className="flex flex-col gap-2 border-t border-gray-200 p-4">
+          <button
+            onClick={handleSave}
+            className="w-full rounded-xl bg-blue-500 py-2 text-sm text-white transition hover:bg-blue-600"
+          >
+            Save
+          </button>
           <button
             onClick={onClear}
             className="w-full rounded-xl border border-red-200 py-2 text-sm text-red-500 transition hover:bg-red-50"
