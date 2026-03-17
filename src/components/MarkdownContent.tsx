@@ -25,7 +25,7 @@ export default function MarkdownContent({ content }: { content: string }) {
           }
           return (
             <code
-              className="rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-rose-600"
+              className="rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-rose-600 dark:bg-gray-700 dark:text-rose-400"
               {...props}
             >
               {children}
@@ -46,7 +46,7 @@ export default function MarkdownContent({ content }: { content: string }) {
         },
         blockquote({ children }) {
           return (
-            <blockquote className="my-2 border-l-4 border-gray-300 pl-3 text-gray-500 italic">
+            <blockquote className="my-2 border-l-4 border-gray-300 pl-3 text-gray-500 italic dark:border-gray-600 dark:text-gray-400">
               {children}
             </blockquote>
           )
@@ -56,7 +56,7 @@ export default function MarkdownContent({ content }: { content: string }) {
         h3({ children }) { return <h3 className="mb-2 text-sm font-bold">{children}</h3> },
         a({ href, children }) {
           return (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">
+            <a href={href} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600 dark:hover:text-blue-400">
               {children}
             </a>
           )
@@ -69,13 +69,13 @@ export default function MarkdownContent({ content }: { content: string }) {
           )
         },
         th({ children }) {
-          return <th className="border border-gray-300 bg-gray-100 px-2 py-1 text-left font-semibold">{children}</th>
+          return <th className="border border-gray-300 bg-gray-100 px-2 py-1 text-left font-semibold dark:border-gray-600 dark:bg-gray-700">{children}</th>
         },
         td({ children }) {
-          return <td className="border border-gray-300 px-2 py-1">{children}</td>
+          return <td className="border border-gray-300 px-2 py-1 dark:border-gray-600">{children}</td>
         },
         hr() {
-          return <hr className="my-3 border-gray-200" />
+          return <hr className="my-3 border-gray-200 dark:border-gray-700" />
         },
       }}
     >

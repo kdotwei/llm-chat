@@ -26,14 +26,14 @@ export default function ChatInput({ input, setInput, isStreaming, apiKey, onSubm
   }
 
   return (
-    <footer className="border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_4px_rgba(0,0,0,0.06)]">
+    <footer className="border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_4px_rgba(0,0,0,0.06)] dark:border-gray-700 dark:bg-gray-800">
       <form
         className="mx-auto flex max-w-2xl items-end gap-2"
         onSubmit={(e) => { e.preventDefault(); onSubmit() }}
       >
         <textarea
           ref={textareaRef}
-          className="max-h-40 min-h-[44px] flex-1 resize-none overflow-y-auto rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm leading-relaxed outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
+          className="max-h-40 min-h-[44px] flex-1 resize-none overflow-y-auto rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm leading-relaxed outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-blue-500"
           placeholder="Message… (Enter to send, Shift+Enter for new line)"
           rows={1}
           value={input}

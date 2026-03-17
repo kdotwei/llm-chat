@@ -4,6 +4,7 @@ import {
   API_URL, MODELS_URL, LS_KEY, LS_SETTINGS_KEY,
   loadSettings, generateId, buildPayload,
 } from './constants'
+import { useDarkMode } from './hooks/useDarkMode'
 import Header from './components/Header'
 import ApiKeyModal from './components/ApiKeyModal'
 import SettingsPanel from './components/SettingsPanel'
@@ -11,6 +12,8 @@ import MessageList from './components/MessageList'
 import ChatInput from './components/ChatInput'
 
 export default function App() {
+  const { isDark, toggle: toggleDark } = useDarkMode()
+
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -117,7 +120,7 @@ export default function App() {
   }, [input, isStreaming, apiKey, messages, settings])
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50 text-gray-900">
+    <div className="flex h-screen flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       {showKeyModal && (
         <ApiKeyModal
           hasKey={!!apiKey}
@@ -137,6 +140,8 @@ export default function App() {
       />
       <Header
         model={settings.model}
+        isDark={isDark}
+        onThemeToggle={toggleDark}
         onSettingsClick={() => setShowSettings(true)}
         onKeyClick={() => { setKeyDraft(''); setShowKeyModal(true) }}
       />
