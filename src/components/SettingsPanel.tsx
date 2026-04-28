@@ -1,50 +1,88 @@
-import { useState, useEffect } from 'react'
-import type { Settings } from '../types'
+import { useEffect, useState } from 'react'
+import type { MCPServerDefinition, Settings } from '../types'
 
 interface SettingsPanelProps {
   show: boolean
   settings: Settings
   availableModels: string[]
-  onSave: (s: Settings) => void
+  enabledServers: MCPServerDefinition[]
+  memoryCount: number
+  onSave: (settings: Settings) => void
   onClose: () => void
-  onClear: () => void
+  onClearConversation: () => void
+  onClearMemory: () => void
 }
 
 export default function SettingsPanel({
   show,
   settings,
   availableModels,
+  enabledServers,
+  memoryCount,
   onSave,
   onClose,
-  onClear,
+  onClearConversation,
+  onClearMemory,
 }: SettingsPanelProps) {
   const [draft, setDraft] = useState<Settings>(settings)
 
-  // Reset draft to committed settings whenever the panel opens
   useEffect(() => {
     if (show) setDraft(settings)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show])
+  }, [show, settings])
 
   function patch<K extends keyof Settings>(key: K, value: Settings[K]) {
-    setDraft((d) => ({ ...d, [key]: value }))
+    setDraft((current) => ({ ...current, [key]: value }))
   }
 
-  function handleSave() {
-    onSave(draft)
-    onClose()
+  function toggleServer(serverId: string) {
+    patch(
+      'enabledMcpServers',
+      draft.enabledMcpServers.includes(serverId)
+        ? draft.enabledMcpServers.filter((id) => id !== serverId)
+        : [...draft.enabledMcpServers, serverId],
+    )
+  }
+
+  function renderModelInput(
+    value: string,
+    onChange: (next: string) => void,
+    placeholder: string,
+  ) {
+    if (availableModels.length > 0) {
+      return (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+        >
+          {availableModels.map((model) => (
+            <option key={model} value={model}>{model}</option>
+          ))}
+        </select>
+      )
+    }
+
+    return (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+      />
+    )
   }
 
   return (
     <>
       {show && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm" onClick={onClose} />
       )}
-      <aside className={`fixed inset-y-0 right-0 z-40 flex w-80 flex-col bg-white shadow-2xl dark:bg-gray-800
-        transition-transform duration-200 ${show ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside
+        className={`fixed inset-y-0 right-0 z-40 flex w-96 max-w-full flex-col bg-white shadow-2xl transition-transform duration-200 dark:bg-gray-800 ${
+          show ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
           <h2 className="font-semibold">Settings</h2>
           <button
@@ -57,35 +95,113 @@ export default function SettingsPanel({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-6 p-4">
-
-          {/* Model */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Model
-            </label>
-            {availableModels.length > 0 ? (
-              <select
-                value={draft.model}
-                onChange={(e) => patch('model', e.target.value)}
-                className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              >
-                {availableModels.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={draft.model}
-                onChange={(e) => patch('model', e.target.value)}
-                placeholder="model-id"
-                className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
-              />
-            )}
+        <div className="flex-1 space-y-6 overflow-y-auto p-4">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-100">
+            v2 adds long-term memory, multimodal image input, auto routing, and local MCP-style tools.
           </div>
 
-          {/* System Prompt */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Default Model
+            </label>
+            {renderModelInput(draft.model, (value) => patch('model', value), 'general-model')}
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Auto Routing
+              </label>
+              <input
+                type="checkbox"
+                checked={draft.autoRoutingEnabled}
+                onChange={(e) => patch('autoRoutingEnabled', e.target.checked)}
+                className="h-4 w-4 rounded accent-blue-500"
+              />
+            </div>
+            <div className="grid gap-3">
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  Vision Model
+                </label>
+                {renderModelInput(draft.visionModel, (value) => patch('visionModel', value), 'vision-model')}
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  Reasoning Model
+                </label>
+                {renderModelInput(draft.reasoningModel, (value) => patch('reasoningModel', value), 'reasoning-model')}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Long-Term Memory
+              </label>
+              <input
+                type="checkbox"
+                checked={draft.longTermMemoryEnabled}
+                onChange={(e) => patch('longTermMemoryEnabled', e.target.checked)}
+                className="h-4 w-4 rounded accent-blue-500"
+              />
+            </div>
+            <p className="mb-2 text-[11px] text-gray-400 dark:text-gray-500">
+              Stored memories: {memoryCount}
+            </p>
+            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Retrieved Memory Limit
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={draft.maxMemoryItems}
+              onChange={(e) => patch('maxMemoryItems', Math.max(1, parseInt(e.target.value, 10) || 1))}
+              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            />
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Tool Use
+              </label>
+              <input
+                type="checkbox"
+                checked={draft.toolUseEnabled}
+                onChange={(e) => patch('toolUseEnabled', e.target.checked)}
+                className="h-4 w-4 rounded accent-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              {['utilities', 'memory', 'browser'].map((serverId) => {
+                const server = enabledServers.find((item) => item.id === serverId)
+                const isEnabled = draft.enabledMcpServers.includes(serverId)
+                const name = server?.name ?? `${serverId} server`
+                const description = server?.description ?? 'Available after save.'
+                return (
+                  <label
+                    key={serverId}
+                    className="flex items-start gap-3 rounded-2xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-700"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => toggleServer(serverId)}
+                      className="mt-0.5 h-4 w-4 rounded accent-blue-500"
+                    />
+                    <div>
+                      <div className="font-medium">{name}</div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               System Prompt
@@ -98,84 +214,93 @@ export default function SettingsPanel({
             />
           </div>
 
-          {/* Temperature */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Temperature
               </label>
-              <span className="text-xs font-mono text-gray-600 dark:text-gray-300">{draft.temperature.toFixed(2)}</span>
+              <span className="font-mono text-xs text-gray-600 dark:text-gray-300">{draft.temperature.toFixed(2)}</span>
             </div>
             <input
-              type="range" min={0} max={2} step={0.01}
+              type="range"
+              min={0}
+              max={2}
+              step={0.01}
               value={draft.temperature}
               onChange={(e) => patch('temperature', parseFloat(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="mt-0.5 flex justify-between text-[10px] text-gray-400 dark:text-gray-500">
-              <span>0 — precise</span><span>2 — creative</span>
-            </div>
           </div>
 
-          {/* Top-P */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Top-P
               </label>
-              <span className="text-xs font-mono text-gray-600 dark:text-gray-300">{draft.topP.toFixed(2)}</span>
+              <span className="font-mono text-xs text-gray-600 dark:text-gray-300">{draft.topP.toFixed(2)}</span>
             </div>
             <input
-              type="range" min={0} max={1} step={0.01}
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
               value={draft.topP}
               onChange={(e) => patch('topP', parseFloat(e.target.value))}
               className="w-full accent-blue-500"
             />
           </div>
 
-          {/* Max Tokens */}
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Max Tokens <span className="font-normal normal-case text-gray-400 dark:text-gray-500">(-1 = unlimited)</span>
+              Max Tokens
             </label>
             <input
-              type="number" min={-1}
+              type="number"
+              min={-1}
               value={draft.maxTokens}
-              onChange={(e) => patch('maxTokens', parseInt(e.target.value) || -1)}
+              onChange={(e) => patch('maxTokens', parseInt(e.target.value, 10) || -1)}
               className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             />
           </div>
 
-          {/* Memory Window */}
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Memory Window <span className="font-normal normal-case text-gray-400 dark:text-gray-500">(turns, 0 = full history)</span>
+              Memory Window
             </label>
             <input
-              type="number" min={0}
+              type="number"
+              min={0}
               value={draft.memoryWindow}
-              onChange={(e) => patch('memoryWindow', parseInt(e.target.value) || 0)}
+              onChange={(e) => patch('memoryWindow', parseInt(e.target.value, 10) || 0)}
               className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             />
             <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-              1 turn = 1 user message + 1 assistant reply.
+              0 keeps the full visible conversation.
             </p>
           </div>
-
         </div>
 
         <div className="flex flex-col gap-2 border-t border-gray-200 p-4 dark:border-gray-700">
           <button
-            onClick={handleSave}
+            onClick={() => {
+              onSave(draft)
+              onClose()
+            }}
             className="w-full rounded-xl bg-blue-500 py-2 text-sm text-white transition hover:bg-blue-600"
           >
             Save
           </button>
           <button
-            onClick={onClear}
-            className="w-full rounded-xl border border-red-200 py-2 text-sm text-red-500 transition hover:bg-red-50"
+            onClick={onClearConversation}
+            className="w-full rounded-xl border border-gray-200 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             Clear Conversation
+          </button>
+          <button
+            onClick={onClearMemory}
+            className="w-full rounded-xl border border-red-200 py-2 text-sm text-red-500 transition hover:bg-red-50"
+          >
+            Clear Long-Term Memory
           </button>
         </div>
       </aside>

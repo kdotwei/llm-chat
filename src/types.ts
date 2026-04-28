@@ -1,14 +1,64 @@
+export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
+
+export interface Attachment {
+  id: string
+  name: string
+  mimeType: string
+  dataUrl: string
+}
+
+export interface ToolCall {
+  id: string
+  name: string
+  arguments: string
+}
+
 export interface Message {
   id: string
-  role: 'user' | 'assistant'
+  role: MessageRole
   content: string
+  attachments?: Attachment[]
+  model?: string
+  routeLabel?: string
+  routeReason?: string
+  toolCalls?: ToolCall[]
+  toolCallId?: string
+  name?: string
+}
+
+export interface MemoryEntry {
+  id: string
+  text: string
+  keywords: string[]
+  createdAt: string
+  lastUsedAt: string
+}
+
+export interface RouterDecision {
+  model: string
+  label: string
+  reason: string
+}
+
+export interface MCPServerDefinition {
+  id: string
+  name: string
+  description: string
+  toolNames: string[]
 }
 
 export interface Settings {
   model: string
+  visionModel: string
+  reasoningModel: string
   systemPrompt: string
   temperature: number
-  maxTokens: number    // -1 = server default / no explicit limit
+  maxTokens: number
   topP: number
-  memoryWindow: number // 0 = entire history, N = last N turns (1 turn = user+assistant)
+  memoryWindow: number
+  autoRoutingEnabled: boolean
+  longTermMemoryEnabled: boolean
+  maxMemoryItems: number
+  toolUseEnabled: boolean
+  enabledMcpServers: string[]
 }

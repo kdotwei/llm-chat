@@ -53,6 +53,20 @@ export default function MessageList({ messages, isStreaming }: MessageListProps)
 
         {messages.map((msg) => {
           if (msg.role === 'assistant' && msg.content === '') return null
+
+          if (msg.role === 'tool') {
+            return (
+              <div key={msg.id} className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100">
+                <div className="mb-1 font-semibold uppercase tracking-wide">
+                  Tool: {msg.name}
+                </div>
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed">
+                  {msg.content}
+                </pre>
+              </div>
+            )
+          }
+
           return (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {msg.role === 'assistant' && (
@@ -62,14 +76,47 @@ export default function MessageList({ messages, isStreaming }: MessageListProps)
               )}
               {msg.role === 'assistant' ? (
                 <div className="flex max-w-[75%] flex-col">
+                  {(msg.model || msg.routeLabel) && (
+                    <div className="mb-1 flex flex-wrap gap-1 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                      {msg.model && (
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                          {msg.model}
+                        </span>
+                      )}
+                      {msg.routeLabel && (
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                          {msg.routeLabel}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-2.5 text-sm leading-relaxed shadow-sm text-gray-800 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700">
                     <MarkdownContent content={msg.content} />
                   </div>
+                  {msg.routeReason && (
+                    <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">{msg.routeReason}</p>
+                  )}
                   <CopyButton content={msg.content} />
                 </div>
               ) : (
-                <div className="max-w-[75%] rounded-2xl rounded-br-sm bg-blue-500 px-4 py-2.5 text-sm leading-relaxed shadow-sm text-white">
-                  {msg.content}
+                <div className="max-w-[75%] space-y-2">
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {msg.attachments.map((attachment) => (
+                        <img
+                          key={attachment.id}
+                          src={attachment.dataUrl}
+                          alt={attachment.name}
+                          className="max-h-44 w-full rounded-2xl object-cover shadow-sm"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {msg.content && (
+                    <div className="rounded-2xl rounded-br-sm bg-blue-500 px-4 py-2.5 text-sm leading-relaxed shadow-sm text-white">
+                      {msg.content}
+                    </div>
+                  )}
                 </div>
               )}
               {msg.role === 'user' && (

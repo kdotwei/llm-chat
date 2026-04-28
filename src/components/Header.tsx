@@ -1,20 +1,49 @@
 interface HeaderProps {
   model: string
+  routedModels: {
+    autoRoutingEnabled: boolean
+    visionModel: string
+    reasoningModel: string
+  }
+  memoryCount: number
   isDark: boolean
   onThemeToggle: () => void
   onSettingsClick: () => void
   onKeyClick: () => void
 }
 
-export default function Header({ model, isDark, onThemeToggle, onSettingsClick, onKeyClick }: HeaderProps) {
+export default function Header({
+  model,
+  routedModels,
+  memoryCount,
+  isDark,
+  onThemeToggle,
+  onSettingsClick,
+  onKeyClick,
+}: HeaderProps) {
   return (
     <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <div className="w-18 flex items-center">
-        <span className="text-xs text-gray-400 truncate max-w-[80px] dark:text-gray-500" title={model}>
-          {model || '—'}
-        </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs text-gray-400 dark:text-gray-500" title={model}>
+          Base: {model || '—'}
+        </div>
+        <div className="mt-1 flex flex-wrap gap-1 text-[10px] uppercase tracking-wide">
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+            Memory {memoryCount}
+          </span>
+          {routedModels.autoRoutingEnabled && (
+            <>
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                Vision {routedModels.visionModel || 'same'}
+              </span>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                Reasoning {routedModels.reasoningModel || 'same'}
+              </span>
+            </>
+          )}
+        </div>
       </div>
-      <h1 className="text-lg font-semibold tracking-tight">LLM Chatroom</h1>
+      <h1 className="px-3 text-center text-lg font-semibold tracking-tight">LLM Chatroom v2</h1>
       <div className="flex items-center gap-1">
         {/* Dark mode toggle */}
         <button

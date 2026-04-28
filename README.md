@@ -1,110 +1,80 @@
-# LLM Chatroom
+# LLM Chatroom v2
 
-A ChatGPT-like single-page chat interface built with React, TypeScript, and Tailwind CSS. Connects to any OpenAI-compatible API endpoint (e.g. llama.cpp server) with real-time streaming responses.
+Homework 02 upgrade of the original chat client from homework 01. This version keeps the same React + TypeScript single-page structure, but adds a more agent-like interaction layer on top of an OpenAI-compatible chat endpoint.
 
-## Features
+## What's New in v2
 
-- **Streaming responses** — Server-Sent Events (SSE) with typewriter effect
-- **Markdown rendering** — Full GFM support with syntax-highlighted code blocks
-- **User-provided API key** — Stored in `localStorage` only; never bundled into the build
-- **Model selector** — Auto-fetches available models from `/v1/models`; falls back to manual text input
-- **Customizable system prompt** — Edit at any time via the Settings panel
-- **API parameter controls** — Temperature, Top-P, Max Tokens, all adjustable in real time
-- **Memory window** — Limit context to the last N conversation turns to manage token usage
-- **OpenAI-compatible** — Works with llama.cpp, Ollama, OpenAI, or any `/v1/chat/completions` endpoint
-- **Keyboard shortcuts** — `Enter` to send, `Shift+Enter` for newline
-- **Auto-resize textarea** — Input area grows with content
-- **Persistent settings** — All settings survive page refresh via `localStorage`
+- Long-term memory stored in `localStorage` with retrieval-augmented prompt injection
+- Multimodal chat with image upload and vision-model routing
+- Automatic model routing between general, vision, and reasoning models
+- Tool use through OpenAI-style function calling
+- MCP-style local server registry for utilities, browser handoff, and memory search
+- Visible routed-model badges and tool execution logs in the chat UI
+
+## Core Features
+
+- Streaming text chat for normal single-model turns
+- Structured non-streaming workflow for image/tool turns
+- Markdown rendering with syntax-highlighted code blocks
+- API key modal with browser-only storage
+- Adjustable system prompt, temperature, top-p, max tokens, and history window
+- Theme toggle and persistent settings
 
 ## Tech Stack
 
-- [Vite](https://vitejs.dev/) + [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS v3](https://tailwindcss.com/)
-- [react-markdown](https://github.com/remarkjs/react-markdown) + [remark-gfm](https://github.com/remarkjs/remark-gfm)
-- [react-syntax-highlighter](https://github.com/react-syntax-highlighter/react-syntax-highlighter) (Prism / One Dark theme)
-- Native `fetch` API with `ReadableStream` for SSE parsing
+- Vite + React 19 + TypeScript
+- Tailwind CSS
+- `react-markdown` + `remark-gfm`
+- `react-syntax-highlighter`
+- Native `fetch` for SSE and JSON chat-completions requests
 
-## Getting Started
+## Environment
 
-### Prerequisites
-
-- Node.js ≥ 18
-- An OpenAI-compatible API server (e.g. [llama.cpp server](https://github.com/ggml-org/llama.cpp))
-
-### Installation
-
-```bash
-git clone https://github.com/kdotwei/llm-chat.git
-cd llm-chat
-npm install
-```
-
-### Configuration
-
-Copy `.env.example` to `.env` and fill in your values:
-
-```bash
-cp .env.example .env
-```
+Copy `.env.example` to `.env` and fill in the model IDs that match your provider.
 
 ```env
-VITE_API_URL=https://your-llama-server/v1/chat/completions
-VITE_API_MODEL=qwen35-4b
+VITE_API_URL=https://your-server/v1/chat/completions
+VITE_API_MODEL=qwen35-397b
+VITE_API_VISION_MODEL=qwen-vl-max
+VITE_API_REASONING_MODEL=deepseek-r1
 ```
 
-| Variable | Description |
-|---|---|
-| `VITE_API_URL` | Full URL to the `/v1/chat/completions` endpoint |
-| `VITE_API_MODEL` | Default model ID (overridable from the Settings panel at runtime) |
-
-> **Note:** These variables are embedded in the client bundle at build time. Do **not** put secret API keys here — use the in-app key modal instead (see below).
-
-### Run
+## Run
 
 ```bash
+npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:5173](http://localhost:5173).
 
-### Build
+## Build
 
 ```bash
 npm run build
-npm run preview
 ```
 
-## API Key
+## Architecture Notes
 
-On first launch, a modal will prompt you to enter your API key. The key is:
+- The app still talks directly to an OpenAI-compatible `/v1/chat/completions` endpoint.
+- Auto routing happens in the browser before each request.
+- Long-term memory is lightweight and local-first: extracted user facts are stored in `localStorage`, then retrieved by keyword overlap.
+- Tool use uses OpenAI-style `tools` / `tool_calls` with browser-local executors.
+- The included MCP portion is an educational, client-side MCP-style registry rather than a full remote MCP transport layer.
 
-- Stored in **`localStorage`** in your browser only
-- Sent as `Authorization: Bearer <key>` on every request
-- Never committed to the repository or included in the build output
+## Deliverables
 
-You can update the key at any time via the **key icon** (🔑) in the top-right corner of the header.
-
-## Settings Panel
-
-Click the **gear icon** (⚙️) in the header to open the Settings side panel.
-
-| Setting | Description |
-|---|---|
-| **Model** | Dropdown populated from `/v1/models`; falls back to a free-text field if the endpoint is unavailable |
-| **System Prompt** | The system-role message prepended to every request |
-| **Temperature** | Slider from 0 (deterministic) to 2 (creative); default `0.7` |
-| **Top-P** | Nucleus sampling threshold; slider from 0 to 1; default `0.95` |
-| **Max Tokens** | Maximum tokens to generate; `-1` = server default (no explicit limit) |
-| **Memory Window** | Number of recent conversation turns to include as context; `0` = full history |
-
-All settings are persisted to `localStorage` and restored on next visit.
+- One-page introduction: [docs/system-introduction.md](docs/system-introduction.md)
+- Architecture diagram: [docs/system-architecture-diagram.md](docs/system-architecture-diagram.md)
 
 ## Project Structure
 
-```
+```text
 src/
-├── App.tsx          # Main component — UI, streaming logic, settings
-├── index.css        # Tailwind directives
-├── main.tsx         # React entry point
-└── vite-env.d.ts    # Vite env variable type declarations
+├── App.tsx
+├── components/
+├── hooks/
+├── lib/
+├── constants.ts
+└── types.ts
 ```
