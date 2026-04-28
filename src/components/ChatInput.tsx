@@ -8,6 +8,7 @@ interface ChatInputProps {
   onFilesSelected: (files: FileList | null) => void
   onRemoveAttachment: (id: string) => void
   isStreaming: boolean
+  processingStatus: string | null
   apiKey: string
   onSubmit: () => void
 }
@@ -19,6 +20,7 @@ export default function ChatInput({
   onFilesSelected,
   onRemoveAttachment,
   isStreaming,
+  processingStatus,
   apiKey,
   onSubmit,
 }: ChatInputProps) {
@@ -42,6 +44,16 @@ export default function ChatInput({
   return (
     <footer className="border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_4px_rgba(0,0,0,0.06)] dark:border-gray-700 dark:bg-gray-800">
       <form className="mx-auto max-w-2xl" onSubmit={(e) => { e.preventDefault(); onSubmit() }}>
+        {processingStatus && (
+          <div className="mb-3 flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-100">
+            <span className="relative flex h-5 w-5 items-center justify-center">
+              <span className="absolute h-5 w-5 animate-ping rounded-full bg-blue-400/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+            </span>
+            <span>{processingStatus}</span>
+          </div>
+        )}
+
         {attachments.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachments.map((attachment) => (
@@ -100,9 +112,13 @@ export default function ChatInput({
             className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Send message"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 translate-x-[1px]">
-              <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
-            </svg>
+            {isStreaming ? (
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 translate-x-[1px]">
+                <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+              </svg>
+            )}
           </button>
         </div>
       </form>

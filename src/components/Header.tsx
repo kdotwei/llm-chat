@@ -6,6 +6,7 @@ interface HeaderProps {
     reasoningModel: string
   }
   memoryCount: number
+  processingStatus: string | null
   isDark: boolean
   onThemeToggle: () => void
   onSettingsClick: () => void
@@ -16,6 +17,7 @@ export default function Header({
   model,
   routedModels,
   memoryCount,
+  processingStatus,
   isDark,
   onThemeToggle,
   onSettingsClick,
@@ -44,7 +46,13 @@ export default function Header({
         </div>
       </div>
       <h1 className="px-3 text-center text-lg font-semibold tracking-tight">LLM Chatroom v2</h1>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {processingStatus && (
+          <div className="hidden items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-medium text-blue-700 md:flex dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+            Working
+          </div>
+        )}
         {/* Dark mode toggle */}
         <button
           onClick={onThemeToggle}

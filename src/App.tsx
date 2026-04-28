@@ -56,16 +56,20 @@ function normalizeToolCalls(toolCalls: ChatApiToolCall[] = []): ToolCall[] {
 }
 
 function buildApiMessages(messages: Message[], settings: Settings, memoryContext: string[]) {
-  const systemMessages: Array<Record<string, unknown>> = [
-    { role: 'system', content: settings.systemPrompt },
-  ]
+  const systemSections = [
+    settings.systemPrompt.trim(),
+    'If tool results include URLs or source fields, summarize them directly in chat and cite the sources as Markdown links. If a web-search tool reports no usable results or a network/provider failure, say that clearly instead of inventing news.',
+    memoryContext.length > 0
+      ? `Relevant long-term memory:\n${memoryContext.map((item) => `- ${item}`).join('\n')}`
+      : '',
+  ].filter(Boolean)
 
-  if (memoryContext.length > 0) {
-    systemMessages.push({
+  const systemMessages: Array<Record<string, unknown>> = [
+    {
       role: 'system',
-      content: `Relevant long-term memory:\n${memoryContext.map((item) => `- ${item}`).join('\n')}`,
-    })
-  }
+      content: systemSections.join('\n\n'),
+    },
+  ]
 
   const history = buildHistorySlice(messages, settings.memoryWindow)
   const apiMessages = history.map((message) => {
@@ -151,6 +155,7 @@ export default function App() {
   const [availableModels, setAvailableModels] = useState<string[]>([])
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([])
   const [memories, setMemories] = useState(loadMemories)
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null)
 
   useEffect(() => {
     localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(settings))
@@ -210,6 +215,7 @@ export default function App() {
 
   async function runStructuredTurn(historySnapshot: Message[], userMessage: Message) {
     const route = routeModel(userMessage.content, userMessage.attachments ?? [], settings, availableModels)
+    setProcessingStatus(`Routing to ${route.label.toLowerCase()} model...`)
     const retrievedMemories = settings.longTermMemoryEnabled
       ? searchMemories(userMessage.content, memories, settings.maxMemoryItems)
       : []
@@ -219,6 +225,8 @@ export default function App() {
     const uiMessages: Message[] = []
 
     for (let iteration = 0; iteration < 5; iteration += 1) {
+      setProcessingStatus(iteration === 0 ? 'Thinking through your request...' : 'Reviewing tool results...')
+
       const body: Record<string, unknown> = {
         model: route.model,
         messages: buildApiMessages(workingHistory, settings, memoryContext),
@@ -239,6 +247,7 @@ export default function App() {
       const assistantText = extractAssistantText(assistantMessage.content)
 
       if (toolCalls.length === 0) {
+        setProcessingStatus('Finalizing the answer...')
         return {
           route,
           messages: [
@@ -270,6 +279,17 @@ export default function App() {
 
         try {
           const args = JSON.parse(toolCall.arguments || '{}') as Record<string, unknown>
+          if (toolCall.name === 'browser_search_web') {
+            setProcessingStatus(`Searching the web for “${String(args.query ?? '').trim() || 'your request'}”...`)
+          } else if (toolCall.name === 'memory_search') {
+            setProcessingStatus('Checking long-term memory...')
+          } else if (toolCall.name === 'utilities_time_now') {
+            setProcessingStatus('Checking the current time...')
+          } else if (toolCall.name === 'browser_open_url') {
+            setProcessingStatus('Opening the requested page...')
+          } else {
+            setProcessingStatus(`Running ${toolCall.name}...`)
+          }
           toolResult = await executeTool(toolCall.name, args, { memories })
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown tool error'
@@ -294,6 +314,7 @@ export default function App() {
 
   async function runStreamingTurn(historySnapshot: Message[], userMessage: Message) {
     const route = routeModel(userMessage.content, userMessage.attachments ?? [], settings, availableModels)
+    setProcessingStatus(`Routing to ${route.label.toLowerCase()} model...`)
     const retrievedMemories = settings.longTermMemoryEnabled
       ? searchMemories(userMessage.content, memories, settings.maxMemoryItems)
       : []
@@ -321,6 +342,7 @@ export default function App() {
 
     if (settings.maxTokens > 0) body.max_tokens = settings.maxTokens
 
+    setProcessingStatus('Waiting for the model to start responding...')
     const response = await callChatApi(body)
     const reader = response.body?.getReader()
     if (!reader) throw new Error('Streaming is not available on this response.')
@@ -351,6 +373,7 @@ export default function App() {
           const parsed = JSON.parse(payload)
           const delta = parsed.choices?.[0]?.delta?.content ?? ''
           if (!delta) continue
+          setProcessingStatus('Generating the answer...')
           setMessages((prev) =>
             prev.map((message) => (
               message.id === assistantId
@@ -398,6 +421,7 @@ export default function App() {
     setInput('')
     setPendingAttachments([])
     setIsStreaming(true)
+    setProcessingStatus('Message received. Preparing the request...')
 
     try {
       if (settings.toolUseEnabled || hasAttachments) {
@@ -420,6 +444,7 @@ export default function App() {
       ])
     } finally {
       setIsStreaming(false)
+      setProcessingStatus(null)
     }
   }
 
@@ -453,12 +478,13 @@ export default function App() {
           reasoningModel: settings.reasoningModel,
         }}
         memoryCount={memories.length}
+        processingStatus={processingStatus}
         isDark={isDark}
         onThemeToggle={toggleDark}
         onSettingsClick={() => setShowSettings(true)}
         onKeyClick={() => { setKeyDraft(''); setShowKeyModal(true) }}
       />
-      <MessageList messages={messages} isStreaming={isStreaming} />
+      <MessageList messages={messages} isStreaming={isStreaming} processingStatus={processingStatus} />
       <ChatInput
         input={input}
         setInput={setInput}
@@ -466,6 +492,7 @@ export default function App() {
         onFilesSelected={handleFilesSelected}
         onRemoveAttachment={(id) => setPendingAttachments((prev) => prev.filter((file) => file.id !== id))}
         isStreaming={isStreaming}
+        processingStatus={processingStatus}
         apiKey={apiKey}
         onSubmit={handleSubmit}
       />

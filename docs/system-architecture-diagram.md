@@ -2,20 +2,20 @@
 
 ```mermaid
 flowchart TD
-    U["User"] --> UI["React UI<br/>ChatInput / MessageList / SettingsPanel"]
-    UI --> ORCH["Client Orchestrator<br/>App.tsx"]
+    U["User"] --> UI["React UI: ChatInput, MessageList, SettingsPanel"]
+    UI --> ORCH["Client Orchestrator: App.tsx"]
 
-    ORCH --> ROUTER["Auto Router<br/>general / vision / reasoning"]
-    ORCH --> MEM["Long-Term Memory<br/>localStorage + retrieval"]
-    ORCH --> TOOL["Tool Executor<br/>OpenAI tool_calls loop"]
+    ORCH --> ROUTER["Auto Router: general, vision, reasoning"]
+    ORCH --> MEM["Long-Term Memory: localStorage plus retrieval"]
+    ORCH --> TOOL["Tool Executor: OpenAI tool_calls loop"]
 
-    MEM --> STORE["Browser Storage<br/>settings + API key + memories"]
+    MEM --> STORE["Browser Storage: settings, API key, memories"]
 
-    TOOL --> MCP1["MCP-style Utilities Server<br/>time / calculator"]
-    TOOL --> MCP2["MCP-style Memory Server<br/>memory_search"]
-    TOOL --> MCP3["MCP-style Browser Server<br/>open_url"]
+    TOOL --> MCP1["MCP-style Utilities Server: time, calculator"]
+    TOOL --> MCP2["MCP-style Memory Server: memory_search"]
+    TOOL --> MCP3["MCP-style Browser Server: search_web, open_url"]
 
-    ROUTER --> API["OpenAI-compatible API<br/>/v1/chat/completions"]
+    ROUTER --> API["OpenAI-compatible API: /v1/chat/completions"]
 
     UI --> IMG["Image Uploads"]
     IMG --> ORCH

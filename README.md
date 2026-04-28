@@ -8,7 +8,7 @@ Homework 02 upgrade of the original chat client from homework 01. This version k
 - Multimodal chat with image upload and vision-model routing
 - Automatic model routing between general, vision, and reasoning models
 - Tool use through OpenAI-style function calling
-- MCP-style local server registry for utilities, browser handoff, and memory search
+- MCP-style local server registry for utilities, web search/browser handoff, and memory search
 - Visible routed-model badges and tool execution logs in the chat UI
 
 ## Core Features
@@ -60,6 +60,7 @@ npm run build
 - Auto routing happens in the browser before each request.
 - Long-term memory is lightweight and local-first: extracted user facts are stored in `localStorage`, then retrieved by keyword overlap.
 - Tool use uses OpenAI-style `tools` / `tool_calls` with browser-local executors.
+- Browser Server can return search summaries with source links in chat, not only open pages.
 - The included MCP portion is an educational, client-side MCP-style registry rather than a full remote MCP transport layer.
 
 ## Deliverables
